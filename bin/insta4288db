@@ -1,0 +1,71 @@
+#!/bin/bash
+# insta4288db
+
+# Stop on errors
+# See https://vaneyckt.io/posts/safer_bash_scripts_with_set_euxo_pipefail/
+set -Eeuo pipefail
+
+# Define paths
+DB_FILE="var/insta4288.sqlite3"
+UPLOADS_DIR="var/uploads"
+SQL_DIR="sql"
+SCHEMA_FILE="$SQL_DIR/schema.sql"
+DATA_FILE="$SQL_DIR/data.sql"
+UPLOADS_SRC="$SQL_DIR/uploads"
+
+# Sanity check command line options
+usage() {
+  echo "Usage: $0 (create|destroy|reset|dump)"
+}
+
+if [ $# -ne 1 ]; then
+    usage
+    exit 1
+fi
+
+# Parse argument
+case $1 in
+    "create")
+        if [ -f "$DB_FILE" ]; then
+            echo "Error: database already exists" >&2
+            exit 1
+        fi
+        mkdir -p "$UPLOADS_DIR"
+        sqlite3 "$DB_FILE" < "$SCHEMA_FILE"
+        sqlite3 "$DB_FILE" < "$DATA_FILE"
+        if [ -d "$UPLOADS_SRC" ]; then
+            cp -r "$UPLOADS_SRC"/* "$UPLOADS_DIR"/
+        fi
+        ;;
+
+    "destroy")
+        rm -rf "$DB_FILE" "$UPLOADS_DIR"
+        ;;
+
+    "reset")
+        rm -rf "$DB_FILE" "$UPLOADS_DIR"
+        mkdir -p "$UPLOADS_DIR"
+        sqlite3 "$DB_FILE" < "$SCHEMA_FILE"
+        sqlite3 "$DB_FILE" < "$DATA_FILE"
+        if [ -d "$UPLOADS_SRC" ]; then
+            cp -r "$UPLOADS_SRC"/* "$UPLOADS_DIR"/
+        fi
+        ;;
+
+    "dump")
+        if [ ! -f "$DB_FILE" ]; then
+            echo "Error: database does not exist" >&2
+            exit 1
+        fi
+        TABLES=$(sqlite3 "$DB_FILE" ".tables")
+        for table in $TABLES; do
+            echo "Table: $table"
+            sqlite3 -batch -line "$DB_FILE" "SELECT * FROM $table;"
+        done
+        ;;
+
+    *)
+        usage
+        exit 1
+        ;;
+esac
