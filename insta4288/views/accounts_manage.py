@@ -1,9 +1,9 @@
 """
 Account management pages (delete/confirm, edit profile, change password).
 
-GET  /accounts/delete/    -> confirmation page
-GET  /accounts/edit/      -> edit profile
-GET  /accounts/password/  -> change password form
+GET  /accounts/delete/
+GET  /accounts/edit/
+GET  /accounts/password/
 """
 
 import flask
@@ -12,25 +12,26 @@ import insta4288
 
 def _get_user_row(connection, username):
     row = connection.execute(
-        "SELECT username, fullname, email, filename AS user_img_url FROM users WHERE username = ?",
+        """SELECT username, fullname, email, filename
+        AS user_img_url FROM users WHERE username = ?""",
         (username,),
     ).fetchone()
     if row is None:
-        # In your seed DB, this exists; if not, fail fast.
         flask.abort(404)
     return dict(row)
 
 
 @insta4288.app.route("/accounts/delete/", methods=["GET"])
 def accounts_delete():
+    """Delete account before confirming sign-up."""
     logname = flask.session.get('logname')
-    # No DB needed for the confirm screen besides printing the username
     context = {"logname": logname}
     return flask.render_template("accounts_delete.html", **context)
 
 
 @insta4288.app.route("/accounts/edit/", methods=["GET"])
 def accounts_edit():
+    """Edit account screen."""
     logname = flask.session.get('logname')
     connection = insta4288.model.get_db()
     user = _get_user_row(connection, logname)
@@ -39,13 +40,14 @@ def accounts_edit():
         "logname": logname,
         "fullname": user["fullname"],
         "email": user["email"],
-        "user_img_url": user["user_img_url"],  # filename only
+        "user_img_url": user["user_img_url"],
     }
     return flask.render_template("accounts_edit.html", **context)
 
 
 @insta4288.app.route("/accounts/password/", methods=["GET"])
 def accounts_password():
+    """Accounts password screen."""
     logname = flask.session.get('logname')
     context = {"logname": logname}
     return flask.render_template("accounts_password.html", **context)

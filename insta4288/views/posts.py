@@ -12,13 +12,12 @@ import insta4288
 
 @insta4288.app.route('/posts/<postid_url_slug>/')
 def show_post(postid_url_slug):
-    """Show a single post page (same info as /, but for one post)."""
-    # Hardcode logged-in user to match your current pattern
+    """Show a single post page."""
     logname = flask.session.get('logname')
 
     connection = insta4288.model.get_db()
 
-    # Fetch the post (or 404 if not found)
+    # Fetch the post or 404
     row = connection.execute(
         """
         SELECT
@@ -46,7 +45,7 @@ def show_post(postid_url_slug):
     post = dict(row)
     post['timestamp'] = arrow.get(post['created']).humanize()
 
-    # Load comments (include commentid for delete buttons)
+    # Load comments
     comments_rows = connection.execute(
         """
         SELECT commentid, owner, text
@@ -60,7 +59,6 @@ def show_post(postid_url_slug):
     comments = []
     for c in comments_rows:
         cd = dict(c)
-        # Optional: mark a caption if you distinguish it; otherwise default False
         cd['is_caption'] = False
         comments.append(cd)
 
@@ -68,10 +66,10 @@ def show_post(postid_url_slug):
         'logname': logname,
         'postid': post['postid'],
         'owner': post['owner'],
-        'owner_img_url': post['owner_img_url'],  # filename only
-        'img_url': post['img_url'],              # filename only
+        'owner_img_url': post['owner_img_url'],
+        'img_url': post['img_url'],
         'likes': post['likes'],
-        'user_liked': post['user_liked'],        # available if you later add like/unlike UI
+        'user_liked': post['user_liked'],
         'timestamp': post['timestamp'],
         'comments': comments,
     }

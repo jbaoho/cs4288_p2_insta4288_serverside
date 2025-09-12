@@ -21,7 +21,3 @@ app.config.from_envvar('INSTA4288_SETTINGS', silent=True)
 # going to tell pylint and pycodestyle to ignore this coding style violation.
 import insta4288.views  # noqa: E402  pylint: disable=wrong-import-position
 import insta4288.model  # noqa: E402  pylint: disable=wrong-import-position
-
-# # Initialize database
-# insta4288.model.get_db()
-

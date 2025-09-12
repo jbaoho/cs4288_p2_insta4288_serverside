@@ -3,3 +3,5 @@ cs4288.pem
 tests/db_tests/__pycache__/
 tests/app_tests/__pycache__/
 tmp/
+insta4288/views/__pycache__/
+insta4288/__pycache__/

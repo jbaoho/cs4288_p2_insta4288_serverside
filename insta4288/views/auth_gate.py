@@ -1,34 +1,36 @@
+"""Authentication/login setup."""
+
 import flask
 import insta4288
 
 # Public GET endpoints that must remain accessible when logged out
 _PUBLIC_GET_ENDPOINTS = {
-    "accounts_login_page",   # GET /accounts/login/
-    "accounts_get_redirect", # GET /accounts/ -> redirect to login
-    "accounts_create",       # GET /accounts/create/
+    "accounts_login_page",
+    "accounts_get_redirect",
+    "accounts_create",
 }
 # Endpoints always allowed (not pages)
 _PUBLIC_ENDPOINTS_GENERIC = {
     "static",
     "accounts_auth",
-    "uploads",               # uploads does its own 403/404 handling
+    "uploads",
 }
+
 
 @insta4288.app.before_request
 def require_login_for_get_pages():
-    # Allow non-page endpoints outright
+    """Require login forall GET pages except for public endpoints."""
     if flask.request.endpoint in _PUBLIC_ENDPOINTS_GENERIC:
         return None
 
-    # Already logged in? allow
+    # Already logged in
     if flask.session.get("logname"):
         return None
 
-    # For GET page requests, redirect to login if not in allowlist
+    # Redirect to login if page not in allowed list
     if flask.request.method == "GET":
         if flask.request.endpoint in _PUBLIC_GET_ENDPOINTS:
             return None
         return flask.redirect(flask.url_for("accounts_login_page"))
 
-    # Let POSTs/others hit their own 403/400 logic
     return None

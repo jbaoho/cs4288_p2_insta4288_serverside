@@ -89,7 +89,7 @@
           <a class="username" href="/users/{{ uname }}/">{{ uname }}</a>
 
           {% if uname != logname %}
-          <span class="relationship">
+          <div class="relationship">
             {{ rel }} {% if u.logname_follows_username %}
             <!-- DO NOT CHANGE THIS (aside from where we say 'FIXME') -->
             <form
@@ -113,7 +113,7 @@
               <input type="hidden" name="operation" value="follow" />
             </form>
             {% endif %}
-          </span>
+          </div>
           {% endif %}
         </li>
         {% endfor %}

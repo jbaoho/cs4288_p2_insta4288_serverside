@@ -1,11 +1,11 @@
 """
 Insta4288 user view.
 
-URLs include:
-/users/<user_url_slug>/
-/users/<user_url_slug>/followers/
-/users/<user_url_slug>/following/
-/posts/<postid_url_slug>/
+URLs:
+    /users/<user_url_slug>/
+    /users/<user_url_slug>/followers/
+    /users/<user_url_slug>/following/
+    /posts/<postid_url_slug>/
 """
 
 import flask
@@ -30,15 +30,12 @@ def _get_user_or_404(connection, username):
 @insta4288.app.route('/users/<user_url_slug>/')
 def show_user(user_url_slug):
     """User profile page."""
-    # For now, hardcode logged-in user (to match your index.py pattern)
     logname = flask.session.get('logname')
 
     connection = insta4288.model.get_db()
 
-    # Ensure the requested user exists; 404 if not
     user_row = _get_user_or_404(connection, user_url_slug)
 
-    # Aggregate counts
     total_posts = connection.execute(
         "SELECT COUNT(*) AS cnt FROM posts WHERE owner = ?",
         (user_url_slug,)
@@ -54,7 +51,6 @@ def show_user(user_url_slug):
         (user_url_slug,)
     ).fetchone()['cnt']
 
-    # Relationship: does logname follow this profile user?
     rel_row = connection.execute(
         """
         SELECT 1
@@ -65,7 +61,7 @@ def show_user(user_url_slug):
     ).fetchone()
     logname_follows_username = rel_row is not None
 
-    # Posts (small thumbnails)
+    # Post thumbnails
     posts = connection.execute(
         """
         SELECT postid, filename AS img_url
@@ -96,11 +92,10 @@ def show_followers(user_url_slug):
     logname = flask.session.get('logname')
     connection = insta4288.model.get_db()
 
-    # 404 if the profile user doesn't exist
+    # 404 if the user doesn't exist
     _ = _get_user_or_404(connection, user_url_slug)
 
-    # List followers: username1 follows username2
-    # Here we want rows where username2 == user_url_slug (i.e., followers of user_url_slug)
+    # List followers
     rows = connection.execute(
         """
         SELECT u.username, u.filename AS user_img_url
@@ -116,7 +111,6 @@ def show_followers(user_url_slug):
     for r in rows:
         follower = dict(r)
 
-        # Relationship from logname -> this follower user
         rel = connection.execute(
             """
             SELECT 1
@@ -131,7 +125,7 @@ def show_followers(user_url_slug):
 
     context = {
         'logname': logname,
-        'username': user_url_slug,  # profile’s username for the header
+        'username': user_url_slug,
         'followers': followers,
     }
     return flask.render_template('followers.html', **context)
@@ -146,8 +140,7 @@ def show_following(user_url_slug):
     # 404 if the profile user doesn't exist
     _ = _get_user_or_404(connection, user_url_slug)
 
-    # List accounts that user_url_slug is following:
-    # username1 follows username2, so we want username1 == user_url_slug
+    # List accounts that user_url_slug is following
     rows = connection.execute(
         """
         SELECT u.username, u.filename AS user_img_url
@@ -163,7 +156,6 @@ def show_following(user_url_slug):
     for r in rows:
         person = dict(r)
 
-        # Relationship from logname -> this user
         rel = connection.execute(
             """
             SELECT 1
@@ -178,7 +170,7 @@ def show_following(user_url_slug):
 
     context = {
         'logname': logname,
-        'username': user_url_slug,  # profile’s username for the header
+        'username': user_url_slug,
         'following': following,
     }
     return flask.render_template('following.html', **context)

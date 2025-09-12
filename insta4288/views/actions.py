@@ -1,5 +1,6 @@
 """
-All POST actions for Insta4288:
+All POST actions for Insta4288.
+
 - /likes/
 - /comments/
 - /posts/
@@ -15,15 +16,12 @@ from typing import Optional
 import flask
 import insta4288
 
-# Logger as requested
 LOGGER = flask.logging.create_logger(insta4288.app)
 
 
-# -----------------------------
-# Helpers
-# -----------------------------
+# Helper functions
 def _get_logname_or_unauth_default() -> Optional[str]:
-    """Return session logname if present, else None (for noauth test mode this may be None)."""
+    """Return session logname if present."""
     return flask.session.get("logname")
 
 
@@ -35,13 +33,13 @@ def _require_login() -> str:
 
 
 def _uploads_dir() -> pathlib.Path:
-    # Your config already uses UPLOAD_FOLDER
     return pathlib.Path(insta4288.app.config["UPLOAD_FOLDER"]).resolve()
 
 
 def _save_upload_and_get_filename(file_field: str) -> str:
     """
     Save uploaded file from `file_field` and return the UUID filename.
+
     Aborts(400) if file missing or empty.
     """
     if file_field not in flask.request.files:
@@ -67,12 +65,11 @@ def _safe_remove_upload(basename: str) -> None:
         return
     folder = _uploads_dir()
     target = (folder / basename).resolve()
-    # Prevent path traversal
     if folder in target.parents or target == folder / basename:
         try:
             target.unlink(missing_ok=True)
-        except Exception:  # best-effort removal only
-            LOGGER.warning("Could not remove file: %s", target)
+        except (FileNotFoundError, PermissionError, OSError) as e:
+            LOGGER.warning("Could not remove file %s: %s", target, e)
 
 
 def _hash_password(password: str) -> str:
@@ -85,10 +82,7 @@ def _hash_password(password: str) -> str:
 
 
 def _verify_password(password: str, stored: str) -> bool:
-    """
-    Verify plaintext password against 'algo$salt$hash'.
-    Returns True when it matches.
-    """
+    """Verify plaintext password against 'algo$salt$hash'."""
     try:
         algorithm, salt, saved_hash = stored.split("$")
     except ValueError:
@@ -100,11 +94,9 @@ def _verify_password(password: str, stored: str) -> bool:
     return h.hexdigest() == saved_hash
 
 
-# -----------------------------
-# /likes/  (POST)
-# -----------------------------
 @insta4288.app.route("/likes/", methods=["POST"])
 def update_likes():
+    """Update the number of likes on a post by liking or unliking."""
     LOGGER.debug("operation = %s", flask.request.form.get("operation"))
     LOGGER.debug("postid = %s", flask.request.form.get("postid"))
 
@@ -118,7 +110,6 @@ def update_likes():
 
     connection = insta4288.model.get_db()
 
-    # Does the like exist?
     existing = connection.execute(
         "SELECT 1 FROM likes WHERE owner = ? AND postid = ?",
         (logname, postid),
@@ -127,7 +118,6 @@ def update_likes():
     if op == "like":
         if existing:
             flask.abort(409)
-        # ensure post exists (foreign key may enforce; do a check to be explicit)
         post_row = connection.execute(
             "SELECT 1 FROM posts WHERE postid = ?",
             (postid,),
@@ -149,11 +139,9 @@ def update_likes():
     return flask.redirect(target)
 
 
-# -----------------------------
-# /comments/  (POST)
-# -----------------------------
 @insta4288.app.route("/comments/", methods=["POST"])
 def update_comments():
+    """Create or delete a comment on a post."""
     logname = _require_login()
 
     op = flask.request.form.get("operation", "").strip()
@@ -165,13 +153,11 @@ def update_comments():
     connection = insta4288.model.get_db()
 
     if op == "create":
-        # Validate
         if not postid:
             flask.abort(400)
         if text is None or text.strip() == "":
             flask.abort(400)
 
-        # Make sure post exists (optional if FK present)
         post_row = connection.execute(
             "SELECT 1 FROM posts WHERE postid = ?",
             (postid,),
@@ -193,7 +179,6 @@ def update_comments():
             (commentid,),
         ).fetchone()
         if not row:
-            # Comment gone — treat like forbidden or missing. 404 is reasonable.
             flask.abort(404)
         if row["owner"] != logname:
             flask.abort(403)
@@ -204,20 +189,17 @@ def update_comments():
         )
         return flask.redirect(target)
 
-    # Unknown op
+    # Else, unknown op
     flask.abort(400)
 
 
-# -----------------------------
-# /posts/  (POST)
-# -----------------------------
 @insta4288.app.route("/posts/", methods=["POST"])
 def update_posts():
+    """Create or delete a post."""
     logname = _require_login()
 
     op = flask.request.form.get("operation", "").strip()
     postid = flask.request.form.get("postid", "").strip()
-    # default redirect for posts: user's page
     target = flask.request.args.get("target", f"/users/{logname}/")
 
     connection = insta4288.model.get_db()
@@ -243,26 +225,17 @@ def update_posts():
         if row["owner"] != logname:
             flask.abort(403)
 
-        # Remove uploaded file
         _safe_remove_upload(row["filename"])
-
-        # Delete DB rows. If FKs are ON DELETE CASCADE, the following single
-        # delete will remove related likes/comments; otherwise do explicit deletes.
         connection.execute("DELETE FROM posts WHERE postid = ?", (postid,))
-        # If needed (no CASCADE):
-        # connection.execute("DELETE FROM likes WHERE postid = ?", (postid,))
-        # connection.execute("DELETE FROM comments WHERE postid = ?", (postid,))
 
         return flask.redirect(target)
 
     flask.abort(400)
 
 
-# -----------------------------
-# /following/  (POST)
-# -----------------------------
 @insta4288.app.route("/following/", methods=["POST"])
 def update_following():
+    """Follow or unfollow someone."""
     logname = _require_login()
 
     op = flask.request.form.get("operation", "").strip()
@@ -273,7 +246,7 @@ def update_following():
         flask.abort(400)
 
     connection = insta4288.model.get_db()
-    # Make sure the user to follow/unfollow exists
+    # Make sure the user exists
     exists = connection.execute(
         "SELECT 1 FROM users WHERE username = ?",
         (username,),
@@ -304,165 +277,154 @@ def update_following():
     return flask.redirect(target)
 
 
-# -----------------------------
-# /accounts/  (POST ops)
-# -----------------------------
 @insta4288.app.route("/accounts/", methods=["POST"])
 def accounts_ops():
-    """
-    Handles:
-      - operation=login
-      - operation=create
-      - operation=delete
-      - operation=edit_account
-      - operation=update_password
-    """
+    """Handle login, create, delete, edit, update_password."""
     op = flask.request.form.get("operation", "").strip()
     target = flask.request.args.get("target", "/")
-
     connection = insta4288.model.get_db()
 
-    # ---------- LOGIN ----------
-    if op == "login":
-        username = flask.request.form.get("username", "").strip()
-        password = flask.request.form.get("password", "").strip()
-        if not username or not password:
-            flask.abort(400)
+    handlers = {
+        "login": lambda: _op_login(connection, target),
+        "create": lambda: _op_create(connection, target),
+        "delete": lambda: _op_delete_account(connection, target),
+        "edit_account": lambda: _op_edit_account(connection, target),
+        "update_password": lambda: _op_update_password(connection, target),
+    }
 
-        row = connection.execute(
-            "SELECT username, password FROM users WHERE username = ?",
-            (username,),
-        ).fetchone()
-        if not row:
-            flask.abort(403)
-        if not _verify_password(password, row["password"]):
-            flask.abort(403)
+    handler = handlers.get(op)
+    if not handler:
+        flask.abort(400)
+    return handler()
 
-        flask.session["logname"] = row["username"]
-        return flask.redirect(target)
 
-    # ---------- CREATE ACCOUNT ----------
-    if op == "create":
-        username = flask.request.form.get("username", "").strip()
-        password = flask.request.form.get("password", "").strip()
-        fullname = flask.request.form.get("fullname", "").strip()
-        email = flask.request.form.get("email", "").strip()
+# Operation helpers
 
-        # Validate required fields
-        if not (username and password and fullname and email):
-            flask.abort(400)
+def _op_login(connection, target):
+    username = flask.request.form.get("username", "").strip()
+    password = flask.request.form.get("password", "").strip()
+    if not username or not password:
+        flask.abort(400)
 
-        # Username availability
-        exists = connection.execute(
-            "SELECT 1 FROM users WHERE username = ?",
-            (username,),
-        ).fetchone()
-        if exists:
-            flask.abort(409)
+    row = connection.execute(
+        "SELECT username, password FROM users WHERE username = ?",
+        (username,),
+    ).fetchone()
+    if not row or not _verify_password(password, row["password"]):
+        flask.abort(403)
 
-        # Save user photo (required)
-        photo_basename = _save_upload_and_get_filename("file")
+    flask.session["logname"] = row["username"]
+    return flask.redirect(target)
 
-        # Hash password and insert
-        pwd_db = _hash_password(password)
-        connection.execute(
-            """
-            INSERT INTO users(username, password, fullname, email, filename)
-            VALUES (?, ?, ?, ?, ?)
-            """,
-            (username, pwd_db, fullname, email, photo_basename),
-        )
 
-        # Log in new user
-        flask.session["logname"] = username
-        return flask.redirect(target)
+def _op_create(connection, target):
+    username = flask.request.form.get("username", "").strip()
+    password = flask.request.form.get("password", "").strip()
+    fullname = flask.request.form.get("fullname", "").strip()
+    email = flask.request.form.get("email", "").strip()
+    if not (username and password and fullname and email):
+        flask.abort(400)
 
-    # Require login for the rest
+    exists = connection.execute(
+        "SELECT 1 FROM users WHERE username = ?",
+        (username,),
+    ).fetchone()
+    if exists:
+        flask.abort(409)
+
+    photo_basename = _save_upload_and_get_filename("file")
+    pwd_db = _hash_password(password)
+    connection.execute(
+        """
+        INSERT INTO users(username, password, fullname, email, filename)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (username, pwd_db, fullname, email, photo_basename),
+    )
+
+    flask.session["logname"] = username
+    return flask.redirect(target)
+
+
+def _op_delete_account(connection, target):
     logname = _require_login()
 
-    # ---------- DELETE ACCOUNT ----------
-    if op == "delete":
-        # Collect files to remove: user icon + all post images
-        posts = connection.execute(
-            "SELECT filename FROM posts WHERE owner = ?",
-            (logname,),
-        ).fetchall()
-        user_row = connection.execute(
-            "SELECT filename FROM users WHERE username = ?",
-            (logname,),
-        ).fetchone()
+    post_files = connection.execute(
+        "SELECT filename FROM posts WHERE owner = ?",
+        (logname,),
+    ).fetchall()
+    user_file_row = connection.execute(
+        "SELECT filename FROM users WHERE username = ?",
+        (logname,),
+    ).fetchone()
 
-        # Delete user row (and rely on ON DELETE CASCADE for related tables)
-        connection.execute("DELETE FROM users WHERE username = ?", (logname,))
+    # Delete user
+    connection.execute("DELETE FROM users WHERE username = ?", (logname,))
 
-        # Remove files after DB delete
-        for p in posts:
-            _safe_remove_upload(p["filename"])
-        if user_row:
-            _safe_remove_upload(user_row["filename"])
+    # Remove files after DB delete
+    for pf in post_files:
+        _safe_remove_upload(pf["filename"])
+    if user_file_row:
+        _safe_remove_upload(user_file_row["filename"])
 
-        # Clear session
-        flask.session.pop("logname", None)
-        return flask.redirect(target)
+    flask.session.pop("logname", None)
+    return flask.redirect(target)
 
-    # ---------- EDIT ACCOUNT ----------
-    if op == "edit_account":
-        fullname = flask.request.form.get("fullname", "").strip()
-        email = flask.request.form.get("email", "").strip()
-        if not fullname or not email:
-            flask.abort(400)
 
-        # Old filename (if we need to replace)
-        current = connection.execute(
-            "SELECT filename FROM users WHERE username = ?",
-            (logname,),
-        ).fetchone()
-        if not current:
-            flask.abort(404)
-        old_basename = current["filename"]
+def _op_edit_account(connection, target):
+    logname = _require_login()
 
-        # If file provided and not empty, replace photo
-        file_field_present = "file" in flask.request.files and flask.request.files["file"].filename
-        if file_field_present:
-            new_basename = _save_upload_and_get_filename("file")
-            connection.execute(
-                "UPDATE users SET fullname = ?, email = ?, filename = ? WHERE username = ?",
-                (fullname, email, new_basename, logname),
-            )
-            # Delete old image after successful update
-            _safe_remove_upload(old_basename)
-        else:
-            connection.execute(
-                "UPDATE users SET fullname = ?, email = ? WHERE username = ?",
-                (fullname, email, logname),
-            )
+    fullname = flask.request.form.get("fullname", "").strip()
+    email = flask.request.form.get("email", "").strip()
+    if not fullname or not email:
+        flask.abort(400)
 
-        return flask.redirect(target)
+    current = connection.execute(
+        "SELECT filename FROM users WHERE username = ?",
+        (logname,),
+    ).fetchone()
+    if not current:
+        flask.abort(404)
 
-    # ---------- UPDATE PASSWORD ----------
-    if op == "update_password":
-        old = flask.request.form.get("password", "").strip()
-        new1 = flask.request.form.get("new_password1", "").strip()
-        new2 = flask.request.form.get("new_password2", "").strip()
-        if not (old and new1 and new2):
-            flask.abort(400)
-
-        row = connection.execute(
-            "SELECT password FROM users WHERE username = ?",
-            (logname,),
-        ).fetchone()
-        if not row or not _verify_password(old, row["password"]):
-            flask.abort(403)
-
-        if new1 != new2:
-            flask.abort(401)
-
-        new_db = _hash_password(new1)
+    file_obj = flask.request.files.get("file")
+    if file_obj and file_obj.filename:
+        new_basename = _save_upload_and_get_filename("file")
         connection.execute(
-            "UPDATE users SET password = ? WHERE username = ?",
-            (new_db, logname),
+            """UPDATE users SET fullname = ?, email = ?,
+            filename = ? WHERE username = ?""",
+            (fullname, email, new_basename, logname),
         )
-        return flask.redirect(target)
+        _safe_remove_upload(current["filename"])
+    else:
+        connection.execute(
+            "UPDATE users SET fullname = ?, email = ? WHERE username = ?",
+            (fullname, email, logname),
+        )
 
-    # Unknown operation
-    flask.abort(400)
+    return flask.redirect(target)
+
+
+def _op_update_password(connection, target):
+    logname = _require_login()
+
+    old = flask.request.form.get("password", "").strip()
+    new1 = flask.request.form.get("new_password1", "").strip()
+    new2 = flask.request.form.get("new_password2", "").strip()
+    if not (old and new1 and new2):
+        flask.abort(400)
+
+    row = connection.execute(
+        "SELECT password FROM users WHERE username = ?",
+        (logname,),
+    ).fetchone()
+    if not row or not _verify_password(old, row["password"]):
+        flask.abort(403)
+    if new1 != new2:
+        flask.abort(401)
+
+    new_db = _hash_password(new1)
+    connection.execute(
+        "UPDATE users SET password = ? WHERE username = ?",
+        (new_db, logname),
+    )
+    return flask.redirect(target)

@@ -1,0 +1,12 @@
+#!/bin/bash
+# Stop immediately on errors and print each command
+set -euo pipefail
+set -x
+
+# Linting and style checks
+pycodestyle insta4288
+pydocstyle insta4288
+pylint insta4288
+
+# Run all unit tests
+pytest -v tests

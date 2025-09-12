@@ -3,8 +3,6 @@ Explore view.
 
 URL:
     /explore/
-Lists all users the logged-in user is NOT following (and is not self),
-with avatar, username link, and a follow button.
 """
 
 import flask
@@ -13,12 +11,12 @@ import insta4288
 
 @insta4288.app.route('/explore/')
 def show_explore():
-    # Match your current pattern: hardcode logname until auth is implemented
+    """Render the explore page."""
     logname = flask.session.get('logname')
 
     connection = insta4288.model.get_db()
 
-    # Users NOT followed by logname (and not logname), with their avatar filename
+    # Query users not followed by logname
     rows = connection.execute(
         """
         SELECT u.username, u.filename AS user_img_url

@@ -43,6 +43,8 @@
       }
       .followbox {
         margin-left: auto;
+        display: flex;
+        align-items: center;
       }
       .followbox form {
         display: inline;
@@ -69,7 +71,7 @@
     </header>
 
     <main class="page-wrap">
-      <h1>Discover People</h1>
+      <h1>Explore</h1>
       <ul class="people">
         {% for u in not_following %}
         <li class="person">
@@ -84,7 +86,7 @@
             >{{ u.username }}</a
           >
 
-          <span class="followbox">
+          <div class="followbox">
             <!-- DO NOT CHANGE THIS (aside from where we say 'FIXME') -->
             <form
               action="/following/?target={{ request.path }}"
@@ -95,7 +97,7 @@
               <input type="hidden" name="username" value="{{ u.username }}" />
               <input type="hidden" name="operation" value="follow" />
             </form>
-          </span>
+          </div>
         </li>
         {% endfor %}
       </ul>
