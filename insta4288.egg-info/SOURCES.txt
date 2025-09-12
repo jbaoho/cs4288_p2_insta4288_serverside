@@ -1,0 +1,9 @@
+pyproject.toml
+insta4288/__init__.py
+insta4288/config.py
+insta4288/model.py
+insta4288.egg-info/PKG-INFO
+insta4288.egg-info/SOURCES.txt
+insta4288.egg-info/dependency_links.txt
+insta4288.egg-info/requires.txt
+insta4288.egg-info/top_level.txt

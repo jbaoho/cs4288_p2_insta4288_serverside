@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>insta4288</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+    <!-- Post view specific styling -->
+    <style>
+      .post-wrap {
+        max-width: 1100px;
+        margin: 24px auto;
+        padding: 0 16px;
+      }
+      .post-frame {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background: #fff;
+      }
+      .post-layout {
+        display: grid;
+        grid-template-columns: minmax(360px, 1fr) 360px;
+        gap: 24px;
+        align-items: start;
+      }
+      .post-media {
+        margin: 0;
+      }
+      .post-media img {
+        display: block;
+        width: 100%;
+        height: auto;
+        border-right: 1px solid #e6e6e6;
+        border-top-left-radius: 8px;
+        border-bottom-left-radius: 8px;
+      }
+      .post-side {
+        padding: 16px;
+      }
+      .post__hdr {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+        border: 0;
+        padding: 0;
+      }
+      .avatar__img {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: block;
+        object-fit: cover;
+      }
+      .username {
+        font-weight: 700;
+        color: #222;
+        text-decoration: none;
+      }
+      .timestamp {
+        margin-left: auto;
+        color: #6b7280;
+        text-decoration: none;
+        font-size: 14px;
+      }
+      .likes {
+        margin: 8px 0 14px 0;
+        font-weight: 500;
+        color: #111;
+      }
+      .caption,
+      .comment {
+        margin: 10px 0 0;
+        line-height: 1.45;
+      }
+      .comment-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .comment-row form {
+        margin-left: auto;
+      }
+      .likebar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 6px 0 16px;
+      }
+      .likebar form {
+        display: inline;
+      }
+      @media (max-width: 900px) {
+        .post-layout {
+          grid-template-columns: 1fr;
+        }
+        .post-media img {
+          border-right: 0;
+          border-bottom: 1px solid #e6e6e6;
+          border-radius: 8px 8px 0 0;
+        }
+        .post-side {
+          padding: 14px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Nav bar -->
+    <header class="site-nav">
+      <div class="nav-inner">
+        <a class="brand" href="/" aria-label="Home">
+          <img
+            src="{{ url_for('static', filename='images/logo.png') }}"
+            alt=""
+            aria-hidden="true"
+          />
+          <span class="brand-text">Insta4288</span>
+        </a>
+        <nav class="links" aria-label="Primary">
+          <a href="/explore/">explore</a>
+          <span class="sep" aria-hidden="true">|</span>
+          <a href="/users/{{ logname }}/">{{ logname }}</a>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Post -->
+    <main class="post-wrap">
+      <article class="post-frame">
+        <div class="post-layout">
+          <!-- Image -->
+          <figure class="post-media">
+            <img
+              class="post__img"
+              src="{{ url_for('uploads', filename=img_url) }}"
+              alt="post by {{ owner }}"
+            />
+          </figure>
+
+          <!-- Sidebar for profile, time, likes, comments -->
+          <aside class="post-side">
+            <header class="post__hdr">
+              <a class="avatar" href="/users/{{ owner }}/">
+                <img
+                  class="avatar__img"
+                  src="{{ url_for('uploads', filename=owner_img_url) }}"
+                  alt="{{ owner }} profile picture"
+                />
+              </a>
+              <a class="username" href="/users/{{ owner }}/">{{ owner }}</a>
+              <a class="timestamp" href="/posts/{{ postid }}/"
+                >{{ timestamp }}</a
+              >
+            </header>
+
+            <section class="post__body">
+              <!-- Likes count + like/unlike control -->
+              <div class="likebar">
+                <p class="likes">
+                  {{ likes }} {{ "like" if likes == 1 else "likes" }}
+                </p>
+
+                {% if user_liked %}
+                <!-- DO NOT CHANGE THIS (aside from where we say 'FIXME') -->
+                <form
+                  action="/likes/?target={{ request.path }}"
+                  method="post"
+                  enctype="multipart/form-data"
+                >
+                  <input type="hidden" name="postid" value="{{ postid }}" />
+                  <input type="submit" name="unlike" value="unlike" />
+                  <input type="hidden" name="operation" value="unlike" />
+                </form>
+                {% else %}
+                <!-- DO NOT CHANGE THIS (aside from where we say 'FIXME') -->
+                <form
+                  action="/likes/?target={{ request.path }}"
+                  method="post"
+                  enctype="multipart/form-data"
+                >
+                  <input type="hidden" name="postid" value="{{ postid }}" />
+                  <input type="submit" name="like" value="like" />
+                  <input type="hidden" name="operation" value="like" />
+                </form>
+                {% endif %}
+              </div>
+
+              <!-- Comments -->
+              {% for c in comments %}
+              <div class="comment-row">
+                <p class="comment">
+                  <a class="user" href="/users/{{ c.owner }}/">{{ c.owner }}</a>
+                  {{ c.text }}
+                </p>
+
+                {% if c.owner == logname %}
+                <!-- DO NOT CHANGE THIS (aside from where we say 'FIXME') -->
+                <form
+                  action="/comments/?target={{ request.path }}"
+                  method="post"
+                  enctype="multipart/form-data"
+                >
+                  <input type="hidden" name="operation" value="delete" />
+                  <input
+                    type="hidden"
+                    name="commentid"
+                    value="{{ c.commentid }}"
+                  />
+                  <input type="submit" name="uncomment" value="delete" />
+                </form>
+                {% endif %}
+              </div>
+              {% endfor %}
+              <!-- Add new comment -->
+              <!-- DO NOT CHANGE THIS (aside from where we say 'FIXME') -->
+              <form
+                action="/comments/?target={{ request.path }}"
+                method="post"
+                enctype="multipart/form-data"
+              >
+                <input
+                  type="text"
+                  name="text"
+                  placeholder="Add a comment..."
+                  required
+                />
+                <input type="hidden" name="operation" value="create" />
+                <input type="hidden" name="postid" value="{{ postid }}" />
+                <input type="submit" name="comment" value="comment" />
+              </form>
+
+              {% if owner == logname %}
+              <hr />
+              <!-- DO NOT CHANGE THIS (aside from where we say 'FIXME') -->
+              <form
+                action="/posts/?target=/users/{{ logname }}/"
+                method="post"
+                enctype="multipart/form-data"
+              >
+                <input type="hidden" name="operation" value="delete" />
+                <input type="hidden" name="postid" value="{{ postid }}" />
+                <input type="submit" name="delete" value="delete this post" />
+              </form>
+              {% endif %}
+            </section>
+          </aside>
+        </div>
+      </article>
+    </main>
+  </body>
+</html>

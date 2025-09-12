@@ -1,0 +1,19 @@
+#!/bin/bash
+# insta4288run
+
+# Stop on errors
+# See https://vaneyckt.io/posts/safer_bash_scripts_with_set_euxo_pipefail/
+set -Eeuo pipefail
+
+# Define database path
+DB_FILE="var/insta4288.sqlite3"
+
+# Check if database exists
+if [ ! -f "$DB_FILE" ]; then
+    echo "Error: can't find database $DB_FILE"
+    echo "Try: ./bin/insta4288db create"
+    exit 1
+fi
+
+# Run the Flask development server
+flask --app insta4288 --debug run --host 0.0.0.0 --port 8000

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>insta4288 – Edit account</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+    <style>
+      .wrap {
+        max-width: 900px;
+        margin: 24px auto;
+        padding: 0 16px;
+      }
+      .card {
+        max-width: 520px;
+        margin: 48px 0 0 72px;
+      }
+      .top {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .avatar__img {
+        width: 44px;
+        height: 44px;
+        border-radius: 4px;
+        object-fit: cover;
+      }
+      .username {
+        font-weight: 700;
+      }
+      .field {
+        display: block;
+        margin: 10px 0 4px;
+      }
+      .navlinks {
+        margin-top: 24px;
+      }
+      .navlinks a {
+        display: block;
+        font-weight: 700;
+        margin: 10px 0;
+      }
+      header.site-nav {
+        border-bottom: 1px solid #cfcfcf;
+      }
+      header .nav-inner {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .brand-logo {
+        height: 40px;
+      }
+      .brand-text {
+        font-size: 28px;
+        font-weight: 800;
+      }
+      .links {
+        margin-left: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-nav">
+      <div class="nav-inner">
+        <img
+          class="brand-logo"
+          src="{{ url_for('static', filename='images/logo.png') }}"
+          alt=""
+          aria-hidden="true"
+        />
+        <span class="brand-text">Insta4288</span>
+        <nav class="links" aria-label="Primary">
+          <a href="/explore/">explore</a>
+          <span aria-hidden="true"> | </span>
+          <a href="/users/{{ logname }}/">{{ logname }}</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <div class="card">
+        <div class="top">
+          <img
+            class="avatar__img"
+            src="{{ url_for('uploads', filename=user_img_url) }}"
+            alt="{{ logname }} profile picture"
+          />
+          <span class="username">{{ logname }}</span>
+        </div>
+
+        <!-- DO NOT CHANGE THIS (aside from where we say 'FIXME') -->
+        <form
+          action="/accounts/?target={{ request.path }}"
+          method="post"
+          enctype="multipart/form-data"
+        >
+          <label class="field" for="file">Photo</label>
+          <input id="file" type="file" name="file" accept="image/*" />
+
+          <label class="field" for="fullname">Name</label>
+          <input
+            id="fullname"
+            type="text"
+            name="fullname"
+            value="{{ fullname }}"
+            required
+          />
+
+          <label class="field" for="email">Email</label>
+          <input
+            id="email"
+            type="text"
+            name="email"
+            value="{{ email }}"
+            required
+          />
+
+          <input type="submit" name="update" value="submit" />
+          <input type="hidden" name="operation" value="edit_account" />
+        </form>
+
+        <div class="navlinks">
+          <a href="/accounts/password/">Change password</a>
+          <a href="/accounts/delete/">Delete account</a>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>

@@ -1,3 +1,5 @@
 cs4288.pem
 .venv
 tests/db_tests/__pycache__/
+tests/app_tests/__pycache__/
+tmp/

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>insta4288</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+  </head>
+  <body>
+    <header class="site-nav">
+      <div class="nav-inner">
+        <a class="brand" href="{{ url_for('show_index') }}" aria-label="Home">
+          <img
+            src="{{ url_for('static', filename='images/logo.png') }}"
+            alt=""
+            aria-hidden="true"
+          />
+          <span class="brand-text">Insta4288</span>
+        </a>
+        <nav class="links" aria-label="Primary">
+          <a href="/explore/">explore</a>
+          <span class="sep" aria-hidden="true">|</span>
+          <a href="/users/{{ logname }}/">{{ logname }}</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="feed">
+      {% for post in posts %}
+      <article class="post">
+        <header class="post__hdr">
+          <a class="avatar" href="/users/{{ post.owner }}/">
+            <img
+              class="avatar__img"
+              src="{{ url_for('uploads', filename=post.owner_img_url) }}"
+              alt="{{ post.owner }} profile picture"
+            />
+          </a>
+          <a class="username" href="/users/{{ post.owner }}/"
+            >{{ post.owner }}</a
+          >
+          <a class="timestamp" href="/posts/{{ post.postid }}/"
+            >{{ post.timestamp }}</a
+          >
+        </header>
+
+        <figure class="post__media">
+          <img
+            class="post__img"
+            src="{{ url_for('uploads', filename=post.img_url) }}"
+            alt="post by {{ post.owner }}"
+          />
+        </figure>
+
+        <section class="post__body">
+          <p class="likes">
+            {{ post.likes }} {{ "like" if post.likes == 1 else "likes" }}
+          </p>
+
+          <!-- Like/Unlike buttons -->
+          {% if post.user_liked %}
+          <!-- Unlike button -->
+          <form
+            action="/likes/?target=/"
+            method="post"
+            enctype="multipart/form-data"
+          >
+            <input type="hidden" name="operation" value="unlike" />
+            <input type="hidden" name="postid" value="{{ post.postid }}" />
+            <input type="submit" name="unlike" value="unlike" />
+          </form>
+          {% else %}
+          <!-- Like button -->
+          <form
+            action="/likes/?target=/"
+            method="post"
+            enctype="multipart/form-data"
+          >
+            <input type="hidden" name="operation" value="like" />
+            <input type="hidden" name="postid" value="{{ post.postid }}" />
+            <input type="submit" name="like" value="like" />
+          </form>
+          {% endif %} {% for c in post.comments %}
+          <p class="{{ 'caption' if c.owner == post.owner else 'comment' }}">
+            <a class="user" href="/users/{{ c.owner }}/">{{ c.owner }}</a>
+            {{ c.text }}
+          </p>
+          {% endfor %}
+
+          <!-- Comment form -->
+          <form
+            action="/comments/?target=/"
+            method="post"
+            enctype="multipart/form-data"
+          >
+            <input type="hidden" name="operation" value="create" />
+            <input type="hidden" name="postid" value="{{ post.postid }}" />
+            <input type="text" name="text" required />
+            <input type="submit" name="comment" value="comment" />
+          </form>
+        </section>
+      </article>
+      {% endfor %}
+    </main>
+  </body>
+</html>

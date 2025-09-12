@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>insta4288 – Delete account</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+    <style>
+      .wrap {
+        max-width: 900px;
+        margin: 24px auto;
+        padding: 0 16px;
+      }
+      .content {
+        max-width: 480px;
+        margin: 48px 0 0 72px;
+      }
+      .username {
+        font-weight: 700;
+        margin-bottom: 16px;
+      }
+      header.site-nav {
+        border-bottom: 1px solid #cfcfcf;
+      }
+      header .nav-inner {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .brand-logo {
+        height: 40px;
+      }
+      .brand-text {
+        font-size: 28px;
+        font-weight: 800;
+      }
+      .links {
+        margin-left: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-nav">
+      <div class="nav-inner">
+        <img
+          class="brand-logo"
+          src="{{ url_for('static', filename='images/logo.png') }}"
+          alt=""
+          aria-hidden="true"
+        />
+        <span class="brand-text">Insta4288</span>
+        <nav class="links" aria-label="Primary">
+          <a href="/explore/">explore</a>
+          <span aria-hidden="true"> | </span>
+          <a href="/users/{{ logname }}/">{{ logname }}</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <div class="content">
+        <p class="username">{{ logname }}</p>
+
+        <!-- DO NOT CHANGE THIS -->
+        <form
+          action="/accounts/?target=/accounts/create/"
+          method="post"
+          enctype="multipart/form-data"
+        >
+          <input type="submit" name="delete" value="confirm delete account" />
+          <input type="hidden" name="operation" value="delete" />
+        </form>
+      </div>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,149 @@
+/* Nav Bar */
+.site-nav {
+  position: sticky;
+  top: 0;
+  background: #fff;
+  border-bottom: 1px solid #e6e6e6;
+  z-index: 10;
+}
+
+/* Nav bar contents */
+.nav-inner {
+  max-width: 650px;
+  margin: 0 auto;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* Insta4288 logo and title */
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Insta logo */
+.brand img {
+  display: block;
+  height: 28px;
+  width: 28px;
+}
+
+/* Insta4288 font */
+.brand-text {
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: 0.4px;
+}
+
+/* Right-side nav links (explore, awdeorio) */
+.links a {
+  margin-left: 8px;
+  text-decoration: none;
+  color: #555;
+}
+.links a:hover {
+  text-decoration: underline;
+}
+
+/* Bar between links */
+.sep {
+  margin: 0 6px;
+  color: #aaa;
+}
+
+@media (max-width: 420px) {
+  .brand-text {
+    display: none;
+  }
+}
+
+/* Post feed (scrolling content) */
+.feed {
+  max-width: 640px;
+  margin: 20px auto 40px;
+  padding: 0 16px;
+}
+
+/* Post content block */
+.post {
+  border: 1px solid #dddddd;
+  border-radius: 6px;
+  background: #fff;
+  overflow: hidden;
+  margin: 16px 0 28px;
+}
+
+/* Post header  */
+.post__hdr {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid #e6e6e6;
+}
+
+/* Avatar/profile pic */
+.avatar__img {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: block;
+}
+
+/* Username */
+.username {
+  font-weight: 700;
+  color: #222;
+  text-decoration: none;
+}
+
+/* Post timestamp */
+.timestamp {
+  margin-left: auto;
+  color: #6b7280;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+/* Responsive post image */
+.post__media {
+  margin: 0;
+}
+
+.post__img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Post body - likes, caption, and comments */
+.post__body {
+  padding: 12px 14px 14px;
+}
+
+/* Like Count */
+.likes {
+  margin: 0 0 10px 0;
+  font-weight: 500;
+  color: #111;
+}
+
+/* Caption and comments */
+.caption,
+.comment {
+  margin: 8px 0 0;
+  line-height: 1.45;
+}
+
+/* Username inside caption/comments */
+.user {
+  font-weight: 700;
+  color: #111;
+  text-decoration: none;
+}

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>insta4288</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+    <style>
+      .profile {
+        max-width: 900px;
+        margin: 24px auto;
+        padding: 0 16px;
+      }
+      .profile__grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(180px, 1fr));
+        gap: 36px;
+        margin-top: 20px;
+      }
+      .thumbnail img {
+        display: block;
+        width: 100%;
+        height: auto;
+        border: 1px solid #e6e6e6;
+      }
+      .row {
+        margin: 8px 0;
+      }
+      .muted {
+        color: #666;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-nav">
+      <div class="nav-inner">
+        <a class="brand" href="/" aria-label="Home">
+          <img
+            src="{{ url_for('static', filename='images/logo.png') }}"
+            alt=""
+            aria-hidden="true"
+          />
+          <span class="brand-text">Insta4288</span>
+        </a>
+        <nav class="links" aria-label="Primary">
+          <a href="/explore/">explore</a>
+          <span class="sep" aria-hidden="true"> | </span>
+          <a href="/users/{{ logname }}/">{{ logname }}</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="profile">
+      <h1><a href="/users/{{ username }}/">{{ username }}</a></h1>
+
+      {% if logname != username %}
+      <div class="row">
+        <span class="muted">
+          {{ "following" if logname_follows_username else "not following" }}
+        </span>
+
+        {% if logname_follows_username %}
+        <!-- DO NOT CHANGE THIS (aside from where we say 'FIXME') -->
+        <form
+          action="/following/?target={{ request.path }}"
+          method="post"
+          enctype="multipart/form-data"
+          style="display: inline"
+        >
+          <input type="submit" name="unfollow" value="unfollow" />
+          <input type="hidden" name="username" value="{{ username }}" />
+          <input type="hidden" name="operation" value="unfollow" />
+        </form>
+        {% else %}
+        <!-- DO NOT CHANGE THIS (aside from where we say 'FIXME') -->
+        <form
+          action="/following/?target={{ request.path }}"
+          method="post"
+          enctype="multipart/form-data"
+          style="display: inline"
+        >
+          <input type="submit" name="follow" value="follow" />
+          <input type="hidden" name="username" value="{{ username }}" />
+          <input type="hidden" name="operation" value="follow" />
+        </form>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <!-- Counts -->
+      <p>
+        <strong>{{ total_posts }}</strong>
+        {{ "post" if total_posts == 1 else "posts" }}
+
+        <a href="/users/{{ username }}/followers/">
+          <strong>{{ followers }}</strong>
+          {{ "follower" if followers == 1 else "followers" }}
+        </a>
+
+        <a href="/users/{{ username }}/following/">
+          <strong>{{ following }}</strong> following
+        </a>
+      </p>
+
+      {% if fullname %}
+      <p>{{ fullname }}</p>
+      {% endif %} {% if logname == username %}
+      <div class="row">
+        <a href="/accounts/edit/">Edit profile</a>
+      </div>
+
+      <!-- DO NOT CHANGE THIS (aside from where we say 'FIXME') -->
+      <form
+        action="/accounts/logout/"
+        method="post"
+        enctype="multipart/form-data"
+        class="row"
+      >
+        <input type="submit" name="logout" value="Logout" />
+      </form>
+
+      <!-- DO NOT CHANGE THIS (aside from where we say 'FIXME') -->
+      <form
+        action="/posts/?target={{ request.path }}"
+        method="post"
+        enctype="multipart/form-data"
+        class="row"
+      >
+        <input type="file" name="file" accept="image/*" required />
+        <input type="submit" name="create_post" value="upload new post" />
+        <input type="hidden" name="operation" value="create" />
+      </form>
+      {% endif %} {% if posts|length == 0 %}
+      <p class="muted">No posts yet.</p>
+      {% else %}
+      <section class="profile__grid">
+        {% for p in posts %}
+        <a
+          class="thumbnail"
+          href="/posts/{{ p.postid }}/"
+          aria-label="Open post {{ p.postid }}"
+        >
+          <img
+            src="{{ url_for('uploads', filename=p.img_url) }}"
+            alt="Post {{ p.postid }} thumbnail"
+          />
+        </a>
+        {% endfor %}
+      </section>
+      {% endif %}
+    </main>
+  </body>
+</html>
